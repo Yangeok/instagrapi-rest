@@ -1,24 +1,26 @@
 import json
-from typing import Optional, Dict
+from typing import Dict, Optional
+
 from fastapi import APIRouter, Depends, Form
+
 from dependencies import ClientStorage, get_clients
 
 router = APIRouter(
-    prefix="/auth",
-    tags=["auth"],
-    responses={404: {"description": "Not found"}}
+    prefix="/auth", tags=["auth"], responses={404: {"description": "Not found"}}
 )
 
+
 @router.post("/login")
-async def auth_login(username: str = Form(...),
-                     password: str = Form(...),
-                     verification_code: Optional[str] = Form(""),
-                     proxy: Optional[str] = Form(""),
-                     locale: Optional[str] = Form(""),
-                     timezone: Optional[str] = Form(""),
-                     clients: ClientStorage = Depends(get_clients)) -> str:
-    """Login by username and password with 2FA
-    """
+async def auth_login(
+    username: str = Form(...),
+    password: str = Form(...),
+    verification_code: Optional[str] = Form(""),
+    proxy: Optional[str] = Form(""),
+    locale: Optional[str] = Form(""),
+    timezone: Optional[str] = Form(""),
+    clients: ClientStorage = Depends(get_clients),
+) -> str:
+    """Login by username and password with 2FA"""
     cl = clients.client()
     if proxy != "":
         cl.set_proxy(proxy)
@@ -29,11 +31,7 @@ async def auth_login(username: str = Form(...),
     if timezone != "":
         cl.set_timezone_offset(timezone)
 
-    result = cl.login(
-        username,
-        password,
-        verification_code=verification_code
-    )
+    result = cl.login(username, password, verification_code=verification_code)
     if result:
         clients.set(cl)
         return cl.sessionid
@@ -41,30 +39,31 @@ async def auth_login(username: str = Form(...),
 
 
 @router.post("/relogin")
-async def auth_relogin(sessionid: str = Form(...),
-                       clients: ClientStorage = Depends(get_clients)) -> str:
-    """Relogin by username and password (with clean cookies)
-    """
+async def auth_relogin(
+    sessionid: str = Form(...), clients: ClientStorage = Depends(get_clients)
+) -> str:
+    """Relogin by username and password (with clean cookies)"""
     cl = clients.get(sessionid)
     result = cl.relogin()
     return result
 
 
 @router.get("/settings/get")
-async def settings_get(sessionid: str,
-                   clients: ClientStorage = Depends(get_clients)) -> Dict:
-    """Get client's settings
-    """
+async def settings_get(
+    sessionid: str, clients: ClientStorage = Depends(get_clients)
+) -> Dict:
+    """Get client's settings"""
     cl = clients.get(sessionid)
     return cl.get_settings()
 
 
 @router.post("/settings/set")
-async def settings_set(settings: str = Form(...),
-                       sessionid: Optional[str] = Form(""),
-                       clients: ClientStorage = Depends(get_clients)) -> str:
-    """Set client's settings
-    """
+async def settings_set(
+    settings: str = Form(...),
+    sessionid: Optional[str] = Form(""),
+    clients: ClientStorage = Depends(get_clients),
+) -> str:
+    """Set client's settings"""
     if sessionid != "":
         cl = clients.get(sessionid)
     else:
@@ -74,10 +73,11 @@ async def settings_set(settings: str = Form(...),
     clients.set(cl)
     return cl.sessionid
 
+
 @router.get("/timeline_feed")
-async def timeline_feed(sessionid: str,
-                   clients: ClientStorage = Depends(get_clients)) -> Dict:
-    """Get your timeline feed
-    """
+async def timeline_feed(
+    sessionid: str, clients: ClientStorage = Depends(get_clients)
+) -> Dict:
+    """Get your timeline feed"""
     cl = clients.get(sessionid)
     return cl.get_timeline_feed()

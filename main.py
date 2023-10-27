@@ -1,13 +1,9 @@
 import pkg_resources
-
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-from starlette.responses import RedirectResponse, JSONResponse
-from routers import (
-    auth, media, video, photo, user,
-    igtv, clip, album, story,
-    insights
-)
+from starlette.responses import JSONResponse, RedirectResponse
+
+from routers import album, auth, clip, igtv, insights, media, photo, story, user, video
 
 app = FastAPI()
 app.include_router(auth.router)
@@ -24,17 +20,15 @@ app.include_router(insights.router)
 
 @app.get("/", tags=["system"], summary="Redirect to /docs")
 async def root():
-    """Redirect to /docs
-    """
+    """Redirect to /docs"""
     return RedirectResponse(url="/docs")
 
 
 @app.get("/version", tags=["system"], summary="Get dependency versions")
 async def version():
-    """Get dependency versions
-    """
+    """Get dependency versions"""
     versions = {}
-    for name in ('instagrapi', ):
+    for name in ("instagrapi",):
         item = pkg_resources.require(name)
         if item:
             versions[name] = item[0].version
@@ -43,10 +37,9 @@ async def version():
 
 @app.exception_handler(Exception)
 async def handle_exception(request, exc: Exception):
-    return JSONResponse({
-        "detail": str(exc),
-        "exc_type": str(type(exc).__name__)
-    }, status_code=500)
+    return JSONResponse(
+        {"detail": str(exc), "exc_type": str(type(exc).__name__)}, status_code=500
+    )
 
 
 def custom_openapi():
@@ -64,5 +57,6 @@ def custom_openapi():
     )
     app.openapi_schema = openapi_schema
     return app.openapi_schema
+
 
 app.openapi = custom_openapi
